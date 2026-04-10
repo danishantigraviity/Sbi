@@ -1,0 +1,6 @@
+Starting test...
+Testing getEncodingFromImage...
+--- LOADING BIOMETRIC MODELS ---
+--- MODELS LOADED ---
+ERROR: Face processing error: Invalid progressive/lossless parameters Ss=0 Se=63 Ah=0 Al=0
+Encoding result: No face
