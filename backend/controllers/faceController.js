@@ -56,20 +56,10 @@ exports.faceLogin = async (req, res) => {
   try {
     const { role, images, lat, lng } = req.body;
 
-    // Strict Geo-fencing for Sellers
-    if (role === 'seller') {
-      if (!lat || !lng) {
-        return res.status(400).json({ message: 'GPS location is required for Biometric Authentication' });
-      }
-      
+    // Geo-fencing Audit (Logs location but no longer blocks)
+    if (role === 'seller' && lat && lng) {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-      if (distance > 200 && process.env.NODE_ENV !== 'development') {
-        return res.status(403).json({ 
-          message: `You are outside office range. (${Math.round(distance)}m away)` 
-        });
-      } else if (distance > 200) {
-        console.log(`[AUTH] Dev Mode: Bypassing Geo-fence (${Math.round(distance)}m)`);
-      }
+      console.log(`[BIOMETRICS] Face Login from ${Math.round(distance)}m away.`);
     }
     
     if (!images || !Array.isArray(images) || images.length < 1) {
@@ -158,18 +148,10 @@ exports.verifyFaceLogout = async (req, res) => {
   try {
     const { images, lat, lng } = req.body;
 
-    // Strict Geo-fencing for Logout
-    if (!lat || !lng) {
-      return res.status(400).json({ message: 'GPS location is required for Duty Completion' });
-    }
-    
-    const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-    if (distance > 200 && process.env.NODE_ENV !== 'development') {
-      return res.status(403).json({ 
-        message: `You are outside office range. (${Math.round(distance)}m away)` 
-      });
-    } else if (distance > 200) {
-      console.log(`[AUTH] Dev Mode: Bypassing Geo-fence for Logout (${Math.round(distance)}m)`);
+    // Geo-fencing Audit (Logs location but no longer blocks)
+    if (lat && lng) {
+      const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
+      console.log(`[BIOMETRICS] Face Logout from ${Math.round(distance)}m away.`);
     }
 
     const user = await User.findById(req.user.id);

@@ -90,20 +90,10 @@ exports.checkIn = async (req, res) => {
       return res.status(400).json({ message: 'Attendance already synchronized for today\'s date' });
     }
 
-    // GPS Validation (Required for both modes to support Live Tracking)
-    if (!lat || !lng) {
-      return res.status(400).json({ message: `GPS location is required for ${mode === 'office' ? 'Office' : 'Online'} Mode` });
-    }
-
-    if (mode === 'office') {
+    // Geo-fencing Audit (Logs location but no longer blocks)
+    if (mode === 'office' && lat && lng) {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-      if (distance > 200 && process.env.NODE_ENV !== 'development') {
-        return res.status(400).json({ 
-          message: `You are outside office range. (${Math.round(distance)}m away)` 
-        });
-      } else if (distance > 200) {
-        console.log(`[ATTENDANCE] Dev Mode: Bypassing Geo-fence for Check-in (${Math.round(distance)}m)`);
-      }
+      console.log(`[ATTENDANCE] Check-in from ${Math.round(distance)}m away.`);
     }
 
     const attendance = new Attendance({
@@ -178,18 +168,10 @@ exports.checkOut = async (req, res) => {
   try {
     const { lat, lng } = req.body;
 
-    // Strict Geo-fencing for Checkout
-    if (!lat || !lng) {
-      return res.status(400).json({ message: 'GPS location is required for Duty Completion' });
-    }
-    
-    const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-    if (distance > 200 && process.env.NODE_ENV !== 'development') {
-      return res.status(403).json({ 
-        message: `You are outside office range. (${Math.round(distance)}m away)` 
-      });
-    } else if (distance > 200) {
-      console.log(`[ATTENDANCE] Dev Mode: Bypassing Geo-fence for Checkout (${Math.round(distance)}m)`);
+    // Geo-fencing Audit (Logs location but no longer blocks)
+    if (lat && lng) {
+      const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
+      console.log(`[ATTENDANCE] Check-out from ${Math.round(distance)}m away.`);
     }
 
     const attendance = await Attendance.findOneAndUpdate(

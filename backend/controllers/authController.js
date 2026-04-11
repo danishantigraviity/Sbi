@@ -53,20 +53,10 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Strict Geo-fencing for Sellers
-    if (role === 'seller') {
-      if (!lat || !lng) {
-        return res.status(400).json({ message: 'GPS location is required for Agent Authentication' });
-      }
-      
+    // Geo-fencing Audit (Logs location but no longer blocks)
+    if (role === 'seller' && lat && lng) {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-      if (distance > 200 && process.env.NODE_ENV !== 'development') {
-        return res.status(403).json({ 
-          message: `You are outside office range. (${Math.round(distance)}m away)` 
-        });
-      } else if (distance > 200) {
-        console.log(`[AUTH] Dev Mode: Bypassing Geo-fence for Seller Login (${Math.round(distance)}m)`);
-      }
+      console.log(`[AUTH] Seller logged in from ${Math.round(distance)}m away from office.`);
     }
     
     const user = await User.findOne({ email, role });
