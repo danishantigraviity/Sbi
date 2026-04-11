@@ -18,12 +18,24 @@ const clearDatabase = async () => {
     const Lead = require('./models/Lead');
     const Sale = require('./models/Sale');
     const Attendance = require('./models/Attendance');
+    const Call = require('./models/Call');
+    const CallQueue = require('./models/CallQueue');
+    const Leave = require('./models/Leave');
+    const LocationHistory = require('./models/LocationHistory');
+    const WorkLog = require('./models/WorkLog');
+    const WorkReport = require('./models/WorkReport');
 
     // Perform deletions
     const tasksDeleted = await Task.deleteMany({});
     const leadsDeleted = await Lead.deleteMany({});
     const salesDeleted = await Sale.deleteMany({});
     const attendanceDeleted = await Attendance.deleteMany({});
+    const callsDeleted = await Call.deleteMany({});
+    const callQueuesDeleted = await CallQueue.deleteMany({});
+    const leavesDeleted = await Leave.deleteMany({});
+    const locationsDeleted = await LocationHistory.deleteMany({});
+    const workLogsDeleted = await WorkLog.deleteMany({});
+    const workReportsDeleted = await WorkReport.deleteMany({});
     
     // Preserve Admin, delete all other users (sellers)
     const sellersDeleted = await User.deleteMany({ role: { $ne: 'admin' } });
@@ -33,6 +45,12 @@ const clearDatabase = async () => {
     console.log(`- Leads Removed: ${leadsDeleted.deletedCount}`);
     console.log(`- Sales Removed: ${salesDeleted.deletedCount}`);
     console.log(`- Attendance Logs Removed: ${attendanceDeleted.deletedCount}`);
+    console.log(`- Calls Removed: ${callsDeleted.deletedCount}`);
+    console.log(`- Call Queues Removed: ${callQueuesDeleted.deletedCount}`);
+    console.log(`- Leaves Removed: ${leavesDeleted.deletedCount}`);
+    console.log(`- Location History Removed: ${locationsDeleted.deletedCount}`);
+    console.log(`- Work Logs Removed: ${workLogsDeleted.deletedCount}`);
+    console.log(`- Work Reports Removed: ${workReportsDeleted.deletedCount}`);
     console.log(`- Sellers Removed: ${sellersDeleted.deletedCount}`);
     console.log('---------------------------');
     console.log('Admin account preserved. System is now clean.');
