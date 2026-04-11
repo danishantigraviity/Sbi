@@ -5,7 +5,11 @@ const attendanceSchema = new mongoose.Schema({
   checkIn: { type: Date, required: true },
   checkOut: { type: Date },
   mode: { type: String, enum: ['office', 'online'], default: 'office' },
-  location: {
+  checkInLocation: {
+    lat: { type: Number },
+    lng: { type: Number }
+  },
+  checkOutLocation: {
     lat: { type: Number },
     lng: { type: Number }
   },

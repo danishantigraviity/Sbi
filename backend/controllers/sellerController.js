@@ -99,7 +99,7 @@ exports.checkIn = async (req, res) => {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
       if (distance > 200 && process.env.NODE_ENV !== 'development') {
         return res.status(400).json({ 
-          message: `Distance threshold exceeded. You are ${Math.round(distance)}m away from the office. (Limit: 200m)` 
+          message: `You are outside office range. (${Math.round(distance)}m away)` 
         });
       } else if (distance > 200) {
         console.log(`[ATTENDANCE] Dev Mode: Bypassing Geo-fence for Check-in (${Math.round(distance)}m)`);
@@ -112,7 +112,7 @@ exports.checkIn = async (req, res) => {
       date,
       mode: mode || 'office',
       shift: shift || 'day',
-      location: { lat, lng }
+      checkInLocation: { lat, lng }
     });
 
     await attendance.save();
@@ -186,7 +186,7 @@ exports.checkOut = async (req, res) => {
     const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
     if (distance > 200 && process.env.NODE_ENV !== 'development') {
       return res.status(403).json({ 
-        message: `Checkout Blocked. You are ${Math.round(distance)}m away from HQ. (Allowed: 200m)` 
+        message: `You are outside office range. (${Math.round(distance)}m away)` 
       });
     } else if (distance > 200) {
       console.log(`[ATTENDANCE] Dev Mode: Bypassing Geo-fence for Checkout (${Math.round(distance)}m)`);
@@ -194,7 +194,7 @@ exports.checkOut = async (req, res) => {
 
     const attendance = await Attendance.findOneAndUpdate(
       { sellerId: req.user.id, checkOut: { $exists: false } },
-      { checkOut: new Date() },
+      { checkOut: new Date(), checkOutLocation: { lat, lng } },
       { new: true }
     );
     res.json(attendance);

@@ -65,7 +65,7 @@ exports.faceLogin = async (req, res) => {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
       if (distance > 200 && process.env.NODE_ENV !== 'development') {
         return res.status(403).json({ 
-          message: `Biometric Denied. You are ${Math.round(distance)}m away from HQ. (Allowed: 200m)` 
+          message: `You are outside office range. (${Math.round(distance)}m away)` 
         });
       } else if (distance > 200) {
         console.log(`[AUTH] Dev Mode: Bypassing Geo-fence (${Math.round(distance)}m)`);
@@ -138,6 +138,7 @@ exports.faceLogin = async (req, res) => {
         sellerId: user._id,
         checkIn: new Date(),
         date: today,
+        checkInLocation: { lat, lng },
         checkInFaceVerified: true
       });
       await attendance.save();
@@ -165,7 +166,7 @@ exports.verifyFaceLogout = async (req, res) => {
     const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
     if (distance > 200 && process.env.NODE_ENV !== 'development') {
       return res.status(403).json({ 
-        message: `Logout Blocked. You are ${Math.round(distance)}m away from HQ. (Allowed: 200m)` 
+        message: `You are outside office range. (${Math.round(distance)}m away)` 
       });
     } else if (distance > 200) {
       console.log(`[AUTH] Dev Mode: Bypassing Geo-fence for Logout (${Math.round(distance)}m)`);
@@ -189,6 +190,7 @@ exports.verifyFaceLogout = async (req, res) => {
 
     if (attendance) {
       attendance.checkOut = new Date();
+      attendance.checkOutLocation = { lat, lng };
       attendance.checkOutFaceVerified = true;
       await attendance.save();
     }

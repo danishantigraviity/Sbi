@@ -23,8 +23,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 // Default Office Coordinates (Placeholder - Example: RedBank HQ)
 const OFFICE_COORDS = {
-  lat: 12.9668, 
-  lng: 77.5130
+  lat: 12.8707332,
+  lng: 78.1082435
 };
 
 module.exports = {

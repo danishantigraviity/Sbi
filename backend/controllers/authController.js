@@ -62,7 +62,7 @@ exports.login = async (req, res) => {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
       if (distance > 200) {
         return res.status(403).json({ 
-          message: `Authentication Denied. You are ${Math.round(distance)}m away from HQ. (Allowed: 200m)` 
+          message: `You are outside office range. (${Math.round(distance)}m away)` 
         });
       }
     }

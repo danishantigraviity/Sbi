@@ -412,8 +412,8 @@ exports.getActiveTrackingSessions = async (req, res) => {
           name: att.sellerId.name,
           email: att.sellerId.email,
           status: 'online', // They are checked in, so we assume online for the hydrator
-          lat: att.location?.lat,
-          lng: att.location?.lng,
+          lat: att.checkInLocation?.lat,
+          lng: att.checkInLocation?.lng,
           lastSeen: att.updatedAt
         };
       }

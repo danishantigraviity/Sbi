@@ -153,7 +153,16 @@ const AttendanceClock = ({ attendance, onCheckIn, onCheckOut, onStartBreak, onEn
                 <motion.button
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => onCheckOut(location)}
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => onCheckOut({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        () => onCheckOut(location)
+                      );
+                    } else {
+                      onCheckOut(location);
+                    }
+                  }}
                   disabled={loading}
                   className="px-12 py-4 mx-auto flex items-center justify-center rounded-2xl bg-gradient-to-tr from-[#005DAB] to-[#007AFF] text-white font-bold uppercase text-xs tracking-[0.2em] shadow-lg shadow-[#005DAB]/20 hover:shadow-xl hover:shadow-[#005DAB]/30 transition-all disabled:opacity-50"
                 >
