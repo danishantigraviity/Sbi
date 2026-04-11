@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const fs = require('fs');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
@@ -58,6 +60,39 @@ mongoose.connect(mongoURI || 'mongodb://localhost:27017/sbi_fallback')
 
 app.set('trust proxy', 1); // Required for Render/Vercel rate limiting to work correctly
 
+// Ensure Uploads Directory Exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+  console.log('[SYSTEM] Created missing uploads directory');
+}
+
+// Auto-Seed Admin Function
+const seedAdmin = async () => {
+    try {
+        const User = require('./models/User');
+        const adminEmail = 'admin@redbank.com';
+        const existingAdmin = await User.findOne({ email: adminEmail });
+        
+        if (!existingAdmin) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            const admin = new User({
+                name: 'System Administrator',
+                email: adminEmail,
+                password: hashedPassword,
+                role: 'admin',
+                phone: '9999999999'
+            });
+            await admin.save();
+            console.log('[SEED] Default Admin created (admin@redbank.com / admin123)');
+        } else {
+            console.log('[SEED] Admin account verified.');
+        }
+    } catch (err) {
+        console.error('[SEED ERROR] Could not verify/seed admin:', err.message);
+    }
+};
+
 // Routes
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -72,13 +107,27 @@ app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
   const fs = require('fs');
-  const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+  // Check multiple possible paths for the dist folder to be super safe
+  const possiblePaths = [
+    path.join(__dirname, '..', 'frontend', 'dist'),
+    path.join(__dirname, 'frontend', 'dist'), // For some build structures
+    path.join(process.cwd(), 'frontend', 'dist'),
+    path.join(process.cwd(), 'dist')
+  ];
+
+  let frontendPath = possiblePaths[0];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      frontendPath = p;
+      break;
+    }
+  }
   
-  console.log(`[DEPLOY DEBUG] Checking frontend at: ${frontendPath}`);
-  if (!fs.existsSync(frontendPath)) {
-    console.error(`[DEPLOY DEBUG] ERROR: Frontend dist folder NOT FOUND at ${frontendPath}`);
+  console.log(`[DEPLOY DEBUG] Final frontend path: ${frontendPath}`);
+  if (!fs.existsSync(path.join(frontendPath, 'index.html'))) {
+    console.error(`[DEPLOY DEBUG] ERROR: index.html NOT FOUND at ${frontendPath}`);
   } else {
-    console.log(`[DEPLOY DEBUG] SUCCESS: Frontend dist folder found.`);
+    console.log(`[DEPLOY DEBUG] SUCCESS: index.html found.`);
   }
   
   // Serve static assets
@@ -94,7 +143,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  await seedAdmin(); // Ensure admin exists on every startup
   startAutocallWorker(); // Background task for CRM calls
 });

@@ -3,9 +3,9 @@ import { store } from "../store";
 import { logout } from "../slices/authSlice";
 
 // Set Base URL from environment variables
-// - In development/proxy, we use '' (since components already prefix with '/api')
-// - In production/cross-domain, we use the full VITE_API_URL
-const API_URL = import.meta.env.VITE_API_URL || "";
+// - In development, we use '' or explicit VITE_API_URL
+// - In production monolith, we use the current window's origin
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : "");
 axios.defaults.baseURL = API_URL;
 
 // Add a request interceptor to inject the auth token
