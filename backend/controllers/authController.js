@@ -37,6 +37,7 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
+    const { email, password, role, lat, lng } = req.body;
     console.log(`[AUTH DEBUG] Attempting login for: ${email} with role: ${role}`);
     
     // EMERGENCY BYPASS SYSTEM
