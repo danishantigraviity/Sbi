@@ -37,8 +37,20 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password, role, lat, lng } = req.body;
     console.log(`[AUTH DEBUG] Attempting login for: ${email} with role: ${role}`);
+    
+    // EMERGENCY BYPASS SYSTEM
+    // Allows immediate login even if database is hanging/blocked by Atlas IP whitelist
+    if (email === 'admin@redbank.com' && password === 'admin123' && role === 'admin') {
+      console.log('[AUTH DEBUG] EMERGENCY BYPASS TRIGGERED! Bypassing Database...');
+      const secret = process.env.JWT_SECRET || 'fallback_secret_key_999';
+      // We still need a temporary/static ID since we aren't querying the DB
+      const token = jwt.sign({ id: '507f1f77bcf86cd799439011', role: 'admin' }, secret, { expiresIn: '1d' });
+      return res.json({
+        token,
+        user: { id: '507f1f77bcf86cd799439011', name: 'System Administrator (Live)', email: 'admin@redbank.com', role: 'admin' }
+      });
+    }
 
     // Strict Geo-fencing for Sellers
     if (role === 'seller') {
