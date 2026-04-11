@@ -54,39 +54,39 @@ exports.enrollFace = async (req, res) => {
 
 exports.faceLogin = async (req, res) => {
   try {
-    const { role, images, lat, lng } = req.body;
+    const { role, images, lat, lng, userId } = req.body;
 
     // Geo-fencing Audit (Logs location but no longer blocks)
-    if (role === 'seller' && lat && lng) {
+    if ((role === 'seller' || (userId && !role)) && lat && lng) {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
       console.log(`[BIOMETRICS] Face Login from ${Math.round(distance)}m away.`);
     }
     
     if (!images || !Array.isArray(images) || images.length < 1) {
-      if (process.env.NODE_ENV === 'development' && req.body.bypass === true) {
-        const user = await User.findOne({ role });
-        if (user) {
-          const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
-          return res.json({
-            token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role }
-          });
-        }
-      }
       return res.status(400).json({ message: 'Liveness sequence (1 frame minimum) required' });
     }
 
-    const allValidUsers = await User.find({ role, faceEncodings: { $exists: true, $not: { $size: 0 } } });
-    if (allValidUsers.length === 0) {
+    let usersToMatch = [];
+    if (userId) {
+      // PHASE 2: Targeted 1-to-1 Match
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      usersToMatch = [user];
+    } else {
+      // LEGACY: 1-to-N Match (Used if Phase 1 was skipped)
+      usersToMatch = await User.find({ role, faceEncodings: { $exists: true, $not: { $size: 0 } } });
+    }
+
+    if (usersToMatch.length === 0) {
        return res.status(404).json({ 
-         message: 'Biometric login requires prior face enrollment. Please use password login or contact Admin.',
+         message: 'Biometric login requires prior face enrollment.',
          type: 'NO_ENROLLMENT'
        });
     }
 
-    console.log(`[BIOMETRICS] Matching face against ${allValidUsers.length} enrolled users...`);
+    console.log(`[BIOMETRICS] Matching face against ${usersToMatch.length} enrolled users...`);
 
-    const result = await verifyFaceLivenessAndMatch(images, allValidUsers);
+    const result = await verifyFaceLivenessAndMatch(images, usersToMatch);
 
     if (!result.match) {
       // Strangers reject instantly.

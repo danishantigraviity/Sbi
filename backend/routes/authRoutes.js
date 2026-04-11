@@ -6,6 +6,10 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/verify-credentials', (req, res, next) => {
+  const { verifyCredentials } = require('../controllers/authController');
+  verifyCredentials(req, res);
+});
 router.post('/face-login', faceLogin);
 router.post('/enroll-face', auth, enrollFace);
 router.get('/check-enrollment', auth, checkEnrollment);
