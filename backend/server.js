@@ -47,9 +47,16 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB:', err));
+const mongoURI = process.env.MONGODB_URI;
+if (!mongoURI) {
+  console.error('FATAL ERROR: MONGODB_URI is not defined in environment variables.');
+}
+
+mongoose.connect(mongoURI || 'mongodb://localhost:27017/sbi_fallback')
+  .then(() => console.log('Connected to MongoDB Successfully'))
+  .catch(err => console.error('Could not connect to MongoDB:', err.message));
+
+app.set('trust proxy', 1); // Required for Render/Vercel rate limiting to work correctly
 
 // Routes
 // API Routes
