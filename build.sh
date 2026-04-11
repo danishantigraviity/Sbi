@@ -2,36 +2,22 @@
 # exit on error
 set -o errexit
 
-echo "--- STARTING CONSOLIDATED BUILD ---"
+echo "--- STARTING UNIVERSAL BUILD ---"
 
-echo "--- INSTALLING ROOT DEPENDENCIES ---"
-npm install
-
-echo "--- INSTALLING BACKEND DEPENDENCIES ---"
-cd backend && npm install
-cd ..
-
-echo "--- INSTALLING FRONTEND DEPENDENCIES ---"
-cd frontend && npm install
-cd ..
-
-echo "--- BUILDING FRONTEND ---"
-cd frontend && npm run build
-cd ..
-
-echo "--- VERIFYING BUILD OUTPUT ---"
-if [ -d "frontend/dist" ]; then
-  echo "✅ BUILD SUCCESS: frontend/dist exists."
-  ls -la frontend/dist
+# Detect if we are in the project root or inside the backend folder
+if [ -d "backend" ]; then
+    echo "✅ Running from Project Root"
+    echo "--- INSTALLING BACKEND DEPENDENCIES ---"
+    cd backend && npm install
+    cd ..
+elif [ -f "server.js" ]; then
+    echo "✅ Running from Backend Folder"
+    echo "--- INSTALLING DEPENDENCIES ---"
+    npm install
 else
-  echo "❌ BUILD ERROR: frontend/dist was not created!"
-  exit 1
+    echo "❌ ERROR: Cannot find project structure. Current Dir: $(pwd)"
+    ls -la
+    exit 1
 fi
-
-echo "--- PREPARING MONOLITH STRUCTURE ---"
-# Create a symlink or copy to ensure backend can find it easily
-mkdir -p backend/dist
-cp -r frontend/dist/* backend/dist/
-echo "✅ MONOLITH READY: backend/dist is populated."
 
 echo "--- BUILD COMPLETE ---"
