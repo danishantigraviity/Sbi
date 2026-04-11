@@ -106,8 +106,8 @@ const SellerDashboard = () => {
       const { data } = await axios.post('/api/seller/checkin', {
         mode: 'office',
         shift,
-        lat: currentLoc?.lat || 12.5425,
-        lng: currentLoc?.lng || 78.2336
+        lat: currentLoc?.lat || 12.8707332,
+        lng: currentLoc?.lng || 78.1082435
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -134,7 +134,7 @@ const SellerDashboard = () => {
     if (targetMode === 'company') {
       try {
         const { data } = await axios.post('/api/work/start', {
-          mode: 'company', lat: 12.5425, lng: 78.2336
+          mode: 'company', lat: 12.8707332, lng: 78.1082435
         }, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
@@ -158,8 +158,8 @@ const SellerDashboard = () => {
         mode: 'personal',
         reason: requestReason,
         duration: parseInt(requestDuration),
-        lat: 12.5425,
-        lng: 78.2336
+        lat: 12.8707332,
+        lng: 78.1082435
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -236,9 +236,9 @@ const SellerDashboard = () => {
           <div className="bg-white dark:bg-[#111827] px-5 py-3 rounded-2xl border border-[#E5E5EA] dark:border-white/10 flex items-center shadow-sm">
             <Clock className="w-5 h-5 text-sub mr-3" />
             <span className="text-sm font-bold text-lead uppercase tracking-tight">
-              {typeof stats?.attendance === 'object' && stats?.attendance !== null
+              {stats?.attendance && typeof stats.attendance === 'object'
                 ? stats.attendance.checkOut ? 'Checked Out' : 'On Duty'
-                : stats?.attendance || 'Not Checked In'}
+                : String(stats?.attendance || 'Not Checked In')}
             </span>
           </div>
 

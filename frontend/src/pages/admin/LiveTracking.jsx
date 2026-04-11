@@ -33,7 +33,7 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const center = [12.5425, 78.2336];
+const center = [12.8707332, 78.1082435];
 
 // Helper to center the map dynamically
 const ChangeView = ({ center, zoom }) => {

@@ -67,8 +67,8 @@ const DutyPermissions = () => {
           mode: requestMode,
           reason: requestReason,
           duration: parseInt(requestDuration),
-          lat: 12.5425,
-          lng: 78.2336,
+          lat: 12.8707332,
+          lng: 78.1082435,
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
