@@ -35,42 +35,6 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.verifyCredentials = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    // Support the standard admin bypass for development
-    if (email === 'admin@redbank.com' && password === 'admin123') {
-      const admin = await User.findOne({ email: 'admin@redbank.com' });
-      return res.json({
-        success: true,
-        user: { 
-          id: admin ? admin._id : '507f1f77bcf86cd799439011', 
-          name: admin ? admin.name : 'System Administrator', 
-          role: 'admin' 
-        }
-      });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    res.json({
-      success: true,
-      user: { id: user._id, name: user.name, role: user.role }
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
 exports.login = async (req, res) => {
   try {
     const { email, password, role, lat, lng } = req.body;

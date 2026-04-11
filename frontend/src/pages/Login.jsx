@@ -3,20 +3,29 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { loginSuccess } from '../slices/authSlice';
 import { Mail, Lock, UserCheck, ShieldCheck, Sun, Moon } from 'lucide-react';
 import FaceScanner from '../components/FaceScanner';
 
-const Login = ({ toggleTheme, isDark }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const Login = ({ toggleTheme, isDark, forcedRole = null }) => {
+  const [role, setRole] = useState(forcedRole || 'admin');
+  const [email, setEmail] = useState('admin@redbank.com');
+  const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
-  const [phase, setPhase] = useState('credentials'); // 'credentials' or 'biometric'
-  const [preAuthUser, setPreAuthUser] = useState(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isFallback, setIsFallback] = useState(true);
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Auto-fill admin credentials when role is admin
+  React.useEffect(() => {
+    if (role === 'admin') {
+      setEmail('admin@redbank.com');
+      setPassword('admin123');
+    }
+  }, [role]);
 
   const getCoordinates = () => {
     return new Promise((resolve) => {
@@ -41,21 +50,24 @@ const Login = ({ toggleTheme, isDark }) => {
     });
   };
 
-  const handleVerifyCredentials = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    const coords = await getCoordinates();
     try {
-      const { data } = await axios.post('/api/auth/verify-credentials', { email, password });
-      if (data.success) {
-        setPreAuthUser(data.user);
-        setPhase('biometric');
-        toast.success("Credential Identity Verified. Proceeding to Biometric Scan.", {
-          icon: '🛡️',
-          style: { background: '#F2F2F7', color: '#005DAB', borderRadius: '1rem', fontWeight: 'bold' }
-        });
-      }
+      const { data } = await axios.post('/api/auth/login', { email, password, role, ...coords });
+      dispatch(loginSuccess(data));
+      navigate(role === 'admin' ? '/admin/dashboard' : '/seller/dashboard', { replace: true });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Invalid email or password');
+      if (err.response?.data?.type === 'NO_ENROLLMENT') {
+        toast.error(err.response.data.message, { 
+          icon: '🔓', 
+          duration: 5000,
+          style: { background: '#F2F2F7', color: '#005DAB', borderRadius: '1rem', fontWeight: 'bold', border: '1px solid #005DAB33' }
+        });
+      } else {
+        toast.error(err.response?.data?.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,23 +77,25 @@ const Login = ({ toggleTheme, isDark }) => {
     setLoading(true);
     const coords = await getCoordinates();
     try {
-      const { data } = await axios.post('/api/auth/face-login', { 
-        userId: preAuthUser?.id, 
-        images, 
-        ...coords 
-      });
-      
+      const { data } = await axios.post('/api/auth/face-login', { role, images, ...coords });
       dispatch(loginSuccess(data));
-      
-      // Automatic role-based redirection
-      const destination = data.user.role === 'admin' ? '/admin/dashboard' : '/seller/dashboard';
-      toast.success(`Welcome back, ${data.user.name}`, { icon: '✨' });
-      navigate(destination, { replace: true });
+      navigate(role === 'admin' ? '/admin/dashboard' : '/seller/dashboard', { replace: true });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Biometric verification failed');
-      // Option to go back if face fails repeatedly
-      if (err.response?.status === 401) {
-        setPhase('credentials');
+      if (err.response?.data?.type === 'NO_ENROLLMENT') {
+        toast.error(err.response.data.message, { 
+          icon: '🔓', 
+          duration: 5000,
+          style: { background: '#F2F2F7', color: '#005DAB', borderRadius: '1rem', fontWeight: 'bold', border: '1px solid #005DAB33' }
+        });
+        setIsFallback(true);
+      } else {
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= 3) {
+          setIsFallback(true);
+        } else {
+          toast.error(`Recognition failed (${newAttempts}/3)`);
+        }
       }
     } finally {
       setLoading(false);
@@ -103,57 +117,32 @@ const Login = ({ toggleTheme, isDark }) => {
           </div>
 
           <h2 className="text-3xl font-bold text-center mb-2 text-[#005DAB] dark:text-[#5AC8FA] uppercase tracking-tight">
-            Secure Terminal
+            {role === 'admin' ? 'Admin Terminal' : 'Agent Portal'}
           </h2>
-          <p className="text-center text-sub dark:text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-8">
-            {phase === 'credentials' ? 'Credentials Identity Phase' : 'Biometric Verification Phase'}
-          </p>
 
-          <AnimatePresence mode="wait">
-            {phase === 'credentials' ? (
-              <motion.form 
-                key="form"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                onSubmit={handleVerifyCredentials} 
-                className="space-y-6"
-              >
-                <div className="relative group">
-                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-sub/50 group-focus-within:text-[#005DAB] transition-colors" />
-                  <input type="email" placeholder="Email Identifier" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-16 pr-6 py-5 rounded-2xl bg-[#F2F2F7] dark:bg-[#0B1120] border border-transparent dark:border-white/10 outline-none text-lead dark:text-white placeholder:text-sub/50 font-bold transition-all focus:ring-4 focus:ring-[#005DAB]/5 focus:border-[#005DAB] dark:focus:border-[#5AC8FA]" required />
-                </div>
-                <div className="relative group">
-                  <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-sub/50 group-focus-within:text-[#005DAB] transition-colors" />
-                  <input type="password" placeholder="Access Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-16 pr-6 py-5 rounded-2xl bg-[#F2F2F7] dark:bg-[#0B1120] border border-transparent dark:border-white/10 outline-none text-lead dark:text-white placeholder:text-sub/50 font-bold transition-all focus:ring-4 focus:ring-[#005DAB]/5 focus:border-[#005DAB] dark:focus:border-[#5AC8FA]" required />
-                </div>
-                <button type="submit" disabled={loading} className="w-full py-5 rounded-2xl bg-gradient-to-r from-[#005DAB] to-[#007AFF] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-[#005DAB]/25 hover:shadow-[#005DAB]/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50">
-                  {loading ? 'Validating...' : 'Initiate Secure Login'}
-                </button>
-              </motion.form>
-            ) : (
-              <motion.div 
-                key="face"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="space-y-8"
-              >
-                <div className="p-4 rounded-2xl bg-[#E8F1F9] dark:bg-blue-500/10 border border-[#005DAB]/20 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#005DAB] flex items-center justify-center text-white font-bold uppercase">
-                    {preAuthUser?.name?.charAt(0) || 'U'}
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-sub uppercase tracking-widest leading-none mb-1">Authenticated Identity</p>
-                    <p className="text-sm font-bold text-[#005DAB] dark:text-[#5AC8FA] tracking-tight">{preAuthUser?.name}</p>
-                  </div>
-                </div>
-                <FaceScanner mode="verify" targetSamples={1} onCapture={handleFaceLogin} autoStart={true} isLoading={loading} />
-                <button onClick={() => setPhase('credentials')} className="w-full py-2 text-sub font-bold text-[10px] uppercase tracking-widest hover:text-[#FF3B30] transition-colors">
-                  Reset Session
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="relative flex bg-[#F2F2F7] dark:bg-[#0B1120] p-1.5 rounded-2xl mb-8 border border-[#E5E5EA] dark:border-white/10">
+            <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white dark:bg-[#111827] rounded-xl shadow-lg transition-all duration-300 ease-out ${role === 'admin' ? 'left-[calc(50%+3px)]' : 'left-1.5'}`} />
+            <button onClick={() => setRole('seller')} className={`relative flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 z-10 ${role === 'seller' ? 'text-[#005DAB] dark:text-[#5AC8FA]' : 'text-sub'}`}>
+              Seller
+            </button>
+            <button onClick={() => setRole('admin')} className={`relative flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 z-10 ${role === 'admin' ? 'text-[#005DAB] dark:text-[#5AC8FA]' : 'text-sub'}`}>
+              Admin
+            </button>
+          </div>
+
+          {!isFallback ? (
+            <div className="space-y-8">
+              <FaceScanner mode="verify" targetSamples={1} onCapture={handleFaceLogin} autoStart={true} isLoading={loading} />
+              <button onClick={() => setIsFallback(true)} className="w-full py-4 text-sub font-bold text-xs uppercase tracking-widest">Manual Authentication</button>
+            </div>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-6">
+              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#0B1120] border border-transparent dark:border-white/10 outline-none text-lead dark:text-white placeholder:text-sub/50 font-bold transition-all focus:ring-4 focus:ring-[#005DAB]/5 focus:border-[#005DAB] dark:focus:border-[#5AC8FA]" required />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#0B1120] border border-transparent dark:border-white/10 outline-none text-lead dark:text-white placeholder:text-sub/50 font-bold transition-all focus:ring-4 focus:ring-[#005DAB]/5 focus:border-[#005DAB] dark:focus:border-[#5AC8FA]" required />
+              <button type="submit" className="w-full py-5 rounded-2xl bg-gradient-to-r from-[#005DAB] to-[#007AFF] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-[#005DAB]/25 hover:shadow-[#005DAB]/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">Authenticate</button>
+              <button type="button" onClick={() => setIsFallback(false)} className="w-full py-2 text-sub font-bold text-xs">Biometric Scan</button>
+            </form>
+          )}
         </div>
       </motion.div>
     </div>
