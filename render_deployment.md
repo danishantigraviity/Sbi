@@ -26,7 +26,7 @@ Click **Advanced** or find the **Environment** tab and add these **Secret Keys**
 
 | Key | Value |
 | :--- | :--- |
-| `MONGODB_URI` | `mongodb+srv://danishantigraviity_db_user:1BwPAO9DgjnJJkId@sbi.7akzbjm.mongodb.net/?appName=Sbi` |
+| `MONGODB_URI` | `mongodb+srv://danishantigraviity_db_user:1BwPAO9DgjnJJkId@sbi.7akzbjm.mongodb.net/Sbi?appName=Sbi` |
 | `JWT_SECRET` | `your_jwt_secret_key_123` (Change this for real production security) |
 | `NODE_ENV` | `production` |
 | `PORT` | `5001` |
