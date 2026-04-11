@@ -3,10 +3,12 @@ import { store } from "../store";
 import { logout } from "../slices/authSlice";
 
 // Set Base URL from environment variables
-// - In development, we use '' or explicit VITE_API_URL
-// - In production monolith, we use the current window's origin
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : "");
+// - For Split Deployment (Vercel + Render), we MUST use VITE_API_URL
+// - For Monolith (Render only), we can fallback to window.location.origin
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "" : "http://localhost:5001");
 axios.defaults.baseURL = API_URL;
+
+console.log(`[API] Base URL set to: ${API_URL || "Self (Monolith)"}`);
 
 // Add a request interceptor to inject the auth token
 axios.interceptors.request.use(
