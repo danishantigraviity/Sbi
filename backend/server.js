@@ -152,6 +152,8 @@ if (isProd) {
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  await seedAdmin(); // Ensure admin exists on every startup
+  await seedAdmin(); // Ensure admin exists
+  const seedDashboard = require('./seed_dashboard');
+  await seedDashboard(); // Ensure dashboard has data
   startAutocallWorker(); // Background task for CRM calls
 });
