@@ -103,31 +103,33 @@ app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/work', require('./routes/workRoutes'));
 app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 
-// Static Serving for Production (Monolith)
-if (process.env.NODE_ENV === 'production') {
+// Static Serving - AGGRESSIVE MODE for Render
+const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+
+if (isProd) {
   const path = require('path');
   const fs = require('fs');
-  // Check multiple possible paths for the dist folder to be super safe
+  
+  // List of possible locations for the site files
   const possiblePaths = [
     path.join(__dirname, '..', 'frontend', 'dist'),
-    path.join(__dirname, 'frontend', 'dist'), // For some build structures
+    path.join(__dirname, 'dist'),
     path.join(process.cwd(), 'frontend', 'dist'),
-    path.join(process.cwd(), 'dist')
+    path.join(process.cwd(), 'dist'),
+    '/opt/render/project/src/frontend/dist' // Explicit Render path
   ];
 
   let frontendPath = possiblePaths[0];
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      frontendPath = p;
-      break;
-    }
-  }
+  console.log('[DEPLOY] Scanning for frontend assets...');
   
-  console.log(`[DEPLOY DEBUG] Final frontend path: ${frontendPath}`);
-  if (!fs.existsSync(path.join(frontendPath, 'index.html'))) {
-    console.error(`[DEPLOY DEBUG] ERROR: index.html NOT FOUND at ${frontendPath}`);
-  } else {
-    console.log(`[DEPLOY DEBUG] SUCCESS: index.html found.`);
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))) {
+      frontendPath = p;
+      console.log(`[DEPLOY] ✅ FOUND index.html at: ${p}`);
+      break;
+    } else {
+      console.log(`[DEPLOY] ❌ No index.html at: ${p}`);
+    }
   }
   
   // Serve static assets
@@ -135,11 +137,16 @@ if (process.env.NODE_ENV === 'production') {
   
   // Handle SPA routing - point all non-API routes to index.html
   app.get(/^(?!\/api).*/, (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    const indexPath = path.join(frontendPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send(`<h1>Frontend Not Found</h1><p>Expected at: ${indexPath}</p><p>Please check Render build logs.</p>`);
+    }
   });
 } else {
   // Simple dev message
-  app.get('/', (req, res) => res.send('🚀 RedBank API is running in Development! Access the Dashboard via the Vite dev server.'));
+  app.get('/', (req, res) => res.send('🚀 RedBank API is running in Development!'));
 }
 
 const PORT = process.env.PORT || 5001;
