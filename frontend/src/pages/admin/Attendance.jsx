@@ -215,8 +215,8 @@ const AdminAttendance = () => {
                         <span className="px-3 py-1 bg-[#F2F2F7] dark:bg-[#0B1120] text-[9px] font-bold text-sub uppercase tracking-widest rounded-full border border-[#E5E5EA] dark:border-white/10">
                           {record.status === 'absent' ? '---' : record.mode || 'OFFICE'}
                         </span>
-                        {record.location?.lat && (
-                          <a href={`https://www.google.com/maps?q=${record.location.lat},${record.location.lng}`} target="_blank" rel="noreferrer" className="p-2 bg-white dark:bg-[#111827] text-sub hover:text-[#005DAB] rounded-xl border border-[#E5E5EA] dark:border-white/10 shadow-sm transition-all group-hover:scale-110">
+                        {record.checkInLocation?.lat && (
+                          <a href={`https://www.google.com/maps?q=${record.checkInLocation.lat},${record.checkInLocation.lng}`} target="_blank" rel="noreferrer" className="p-2 bg-white dark:bg-[#111827] text-sub hover:text-[#005DAB] rounded-xl border border-[#E5E5EA] dark:border-white/10 shadow-sm transition-all group-hover:scale-110">
                             <MapPin className="w-3.5 h-3.5" />
                           </a>
                         )}

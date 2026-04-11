@@ -60,10 +60,12 @@ exports.login = async (req, res) => {
       }
       
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-      if (distance > 200) {
+      if (distance > 200 && process.env.NODE_ENV !== 'development') {
         return res.status(403).json({ 
           message: `You are outside office range. (${Math.round(distance)}m away)` 
         });
+      } else if (distance > 200) {
+        console.log(`[AUTH] Dev Mode: Bypassing Geo-fence for Seller Login (${Math.round(distance)}m)`);
       }
     }
     

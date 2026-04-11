@@ -48,7 +48,7 @@ const seedData = async () => {
     // 4. Seed Attendance
     await Attendance.deleteMany({});
     const attendance = [
-      { user: seller._id, date: new Date(), status: 'present', checkIn: new Date(), type: 'office' }
+      { sellerId: seller._id, date: new Date().toISOString().split('T')[0], status: 'present', checkIn: new Date(), mode: 'office' }
     ];
     await Attendance.insertMany(attendance);
     console.log('[SEED] Attendance Seeded.');

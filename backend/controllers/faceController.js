@@ -193,6 +193,8 @@ exports.verifyFaceLogout = async (req, res) => {
       attendance.checkOutLocation = { lat, lng };
       attendance.checkOutFaceVerified = true;
       await attendance.save();
+    } else {
+      return res.status(404).json({ message: 'No active check-in found for today. Please check-in first.' });
     }
 
     res.json({ success: true, message: 'Face verified successfully' });
