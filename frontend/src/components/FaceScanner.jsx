@@ -3,7 +3,7 @@ import Webcam from 'react-webcam';
 import { Camera, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const FaceScanner = ({ onCapture, mode = 'verify', targetSamples = 1, autoStart = false }) => {
+const FaceScanner = ({ onCapture, mode = 'verify', targetSamples = 1, autoStart = false, isLoading = false }) => {
   const webcamRef = useRef(null);
   const [samples, setSamples] = useState([]);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -130,7 +130,7 @@ const FaceScanner = ({ onCapture, mode = 'verify', targetSamples = 1, autoStart 
         </div>
 
         <AnimatePresence>
-          {status.includes('Processing') && (
+          {isLoading && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

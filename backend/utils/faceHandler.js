@@ -30,16 +30,18 @@ const loadModels = async () => {
  * Extracts a 128-float face descriptor from a base64 image.
  * Uses Python AI Service primarily, with JS fallback.
  */
-const getEncodingFromImage = async (base64Image) => {
+const getEncodingFromImage = async (base64Image, skipAI = false) => {
     // 1. Try Python AI Service (High Fidelity)
-    try {
-        const encodings = await FaceAIService.getEncodings([base64Image]);
-        if (encodings && encodings.length > 0) {
-            console.log('[BIOMETRICS] Encoding generated via Python AI Service');
-            return encodings[0];
+    if (!skipAI) {
+        try {
+            const encodings = await FaceAIService.getEncodings([base64Image]);
+            if (encodings && encodings.length > 0) {
+                console.log('[BIOMETRICS] Encoding generated via Python AI Service');
+                return encodings[0];
+            }
+        } catch (err) {
+            console.warn('[BIOMETRICS] Python AI Service unavailable, falling back to JS');
         }
-    } catch (err) {
-        console.warn('[BIOMETRICS] Python AI Service unavailable, falling back to JS');
     }
 
     // 2. JS Fallback
@@ -89,7 +91,8 @@ const verifyFaceLivenessAndMatch = async (liveImagesB64Array, allUsersArray) => 
     try {
         const liveDescriptors = [];
         for (const b64 of liveImagesB64Array) {
-            const desc = await getEncodingFromImage(b64); // This might use Python too, but inside a loop it's OK
+            // Force skip AI service here because the direct verify call above already failed/timed out
+            const desc = await getEncodingFromImage(b64, true); 
             if (desc) liveDescriptors.push(new Float32Array(desc));
         }
 

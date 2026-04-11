@@ -30,9 +30,22 @@ const Login = ({ toggleTheme, isDark, forcedRole = null }) => {
   const getCoordinates = () => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) return resolve({ lat: null, lng: null });
+      
+      const timeoutId = setTimeout(() => {
+        console.warn('[AUTH] Geolocation timed out after 5s');
+        resolve({ lat: null, lng: null });
+      }, 5000);
+
       navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => resolve({ lat: null, lng: null })
+        (pos) => {
+          clearTimeout(timeoutId);
+          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          clearTimeout(timeoutId);
+          resolve({ lat: null, lng: null });
+        },
+        { timeout: 5000, enableHighAccuracy: true }
       );
     });
   };
@@ -119,7 +132,7 @@ const Login = ({ toggleTheme, isDark, forcedRole = null }) => {
 
           {!isFallback ? (
             <div className="space-y-8">
-              <FaceScanner mode="verify" targetSamples={1} onCapture={handleFaceLogin} autoStart={true} />
+              <FaceScanner mode="verify" targetSamples={1} onCapture={handleFaceLogin} autoStart={true} isLoading={loading} />
               <button onClick={() => setIsFallback(true)} className="w-full py-4 text-sub font-bold text-xs uppercase tracking-widest">Manual Authentication</button>
             </div>
           ) : (
