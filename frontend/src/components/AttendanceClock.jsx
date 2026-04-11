@@ -1,4 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Clock, 
+  MapPin, 
+  Building2, 
+  Home, 
+  Play, 
+  CheckCircle2, 
+  AlertTriangle, 
+  LogOut, 
+  Coffee 
+} from 'lucide-react';
 import ShiftSelectionModal from './ShiftSelectionModal';
 
 const AttendanceClock = ({ attendance, onCheckIn, onCheckOut, onStartBreak, onEndBreak, loading }) => {
