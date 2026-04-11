@@ -29,18 +29,18 @@ const seedData = async () => {
     // 2. Clear & Seed Leads
     await Lead.deleteMany({});
     const leads = [
-      { name: 'John Doe', email: 'john@example.com', phone: '9876543210', status: 'new', assignedTo: seller._id, source: 'Web' },
-      { name: 'Jane Smith', email: 'jane@example.com', phone: '9876543211', status: 'contacted', assignedTo: seller._id, source: 'Referral' },
-      { name: 'Alice Brown', email: 'alice@example.com', phone: '9876543212', status: 'qualified', assignedTo: seller._id, source: 'Walk-in' }
+      { name: 'John Doe', address: '123 Wall St, NY', email: 'john@example.com', phone: '9876543210', status: 'new', sellerId: seller._id },
+      { name: 'Jane Smith', address: '456 Broadway, NY', email: 'jane@example.com', phone: '9876543211', status: 'called', sellerId: seller._id },
+      { name: 'Alice Brown', address: '789 Fifth Ave, NY', email: 'alice@example.com', phone: '9876543212', status: 'converted', sellerId: seller._id }
     ];
-    await Lead.insertMany(leads);
+    const createdLeads = await Lead.insertMany(leads);
     console.log('[SEED] Leads Seeded.');
 
     // 3. Seed Sales
     await Sale.deleteMany({});
     const sales = [
-      { leadName: 'John Doe', amount: 50000, date: new Date(), seller: seller._id, status: 'completed' },
-      { leadName: 'Jane Smith', amount: 75000, date: new Date(), seller: seller._id, status: 'completed' }
+      { leadId: createdLeads[0]._id, cardType: 'SBI Prime', sellerId: seller._id, status: 'completed' },
+      { leadId: createdLeads[1]._id, cardType: 'SBI Elite', sellerId: seller._id, status: 'completed' }
     ];
     await Sale.insertMany(sales);
     console.log('[SEED] Sales Seeded.');
@@ -48,7 +48,7 @@ const seedData = async () => {
     // 4. Seed Attendance
     await Attendance.deleteMany({});
     const attendance = [
-      { sellerId: seller._id, date: new Date().toISOString().split('T')[0], status: 'present', checkIn: new Date(), mode: 'office' }
+      { sellerId: seller._id, date: new Date().toISOString().split('T')[0], checkIn: new Date(), mode: 'office', shift: 'day' }
     ];
     await Attendance.insertMany(attendance);
     console.log('[SEED] Attendance Seeded.');
