@@ -173,22 +173,35 @@ const SellerAttendance = () => {
               highlightData={(() => {
                 const data = {};
                 // Helper to format date consistent with backend
-                const fmt = (d) => d.toISOString().split('T')[0];
+                const fmt = (d) => {
+                  try {
+                    return d.toISOString().split('T')[0];
+                  } catch (e) {
+                    return '';
+                  }
+                };
                 
-                // Past 30 days logic
+                // Past 30 days logic (Safe generation)
                 for (let i = 1; i <= 30; i++) {
                   const d = new Date();
                   d.setDate(d.getDate() - i);
-                  data[fmt(d)] = 'absent';
+                  const key = fmt(d);
+                  if (key) data[key] = 'absent';
                 }
                 
-                // Overlay actual history
-                history.forEach(h => {
-                  data[h.date] = 'present';
-                });
+                // Overlay actual history (Safe iteration)
+                if (Array.isArray(history)) {
+                  history.forEach(h => {
+                    if (h && h.date) {
+                      data[h.date] = 'present';
+                    }
+                  });
+                }
 
                 // Today's status
-                if (attendance) data[today] = 'present';
+                if (attendance) {
+                   data[today] = 'present';
+                }
                 
                 return data;
               })()}
@@ -207,7 +220,7 @@ const SellerAttendance = () => {
             <History className="w-5 h-5 mr-4" /> Recent Activity Log
           </h3>
 
-        {history.length > 0 ? (
+        {Array.isArray(history) && history.length > 0 ? (
           <div className="space-y-4">
             {history.map((record) => (
               <motion.div key={record._id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="p-6 rounded-3xl bg-[#F9F9FB] dark:bg-[#0B1120] border border-[#E5E5EA] dark:border-white/5 flex flex-wrap items-center justify-between gap-4">
