@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { loginSuccess } from '../slices/authSlice';
 import { Mail, Lock, UserCheck, ShieldCheck, Sun, Moon } from 'lucide-react';
 import FaceScanner from '../components/FaceScanner';
@@ -140,7 +140,7 @@ const Login = ({ toggleTheme, isDark }) => {
               >
                 <div className="p-4 rounded-2xl bg-[#E8F1F9] dark:bg-blue-500/10 border border-[#005DAB]/20 flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-[#005DAB] flex items-center justify-center text-white font-bold uppercase">
-                    {preAuthUser?.name[0]}
+                    {preAuthUser?.name?.charAt(0) || 'U'}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-sub uppercase tracking-widest leading-none mb-1">Authenticated Identity</p>
