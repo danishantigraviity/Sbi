@@ -71,7 +71,15 @@ app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
 // Static Serving for Production (Monolith)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
+  const fs = require('fs');
   const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+  
+  console.log(`[DEPLOY DEBUG] Checking frontend at: ${frontendPath}`);
+  if (!fs.existsSync(frontendPath)) {
+    console.error(`[DEPLOY DEBUG] ERROR: Frontend dist folder NOT FOUND at ${frontendPath}`);
+  } else {
+    console.log(`[DEPLOY DEBUG] SUCCESS: Frontend dist folder found.`);
+  }
   
   // Serve static assets
   app.use(express.static(frontendPath));
