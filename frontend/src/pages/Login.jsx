@@ -19,6 +19,14 @@ const Login = ({ toggleTheme, isDark, forcedRole = null }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Auto-fill admin credentials when role is admin
+  React.useEffect(() => {
+    if (role === 'admin') {
+      setEmail('admin@redbank.com');
+      setPassword('admin123');
+    }
+  }, [role]);
+
   const getCoordinates = () => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) return resolve({ lat: null, lng: null });
