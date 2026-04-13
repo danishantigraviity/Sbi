@@ -14,13 +14,14 @@ const {
   endBreak,
   getMyAttendance 
 } = require('../controllers/sellerController');
-const { enrollFace, verifyFaceLogout } = require('../controllers/faceController');
+const { enrollFace, verifyFaceLogout, verifyPasswordLogout } = require('../controllers/faceController');
 const { auth, sellerOnly } = require('../middleware/auth');
 
 router.get('/stats', auth, sellerOnly, getSellerStats);
 router.get('/attendance-history', auth, sellerOnly, getMyAttendance);
 router.post('/enroll-face', auth, sellerOnly, enrollFace);
 router.post('/verify-logout', auth, verifyFaceLogout);
+router.post('/verify-password-logout', auth, verifyPasswordLogout);
 router.get('/leads', auth, sellerOnly, getLeads);
 router.post('/leads', auth, sellerOnly, createLead);
 router.get('/tasks', auth, sellerOnly, getSellerTasks);

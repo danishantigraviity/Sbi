@@ -189,3 +189,43 @@ exports.verifyFaceLogout = async (req, res) => {
     res.status(500).json({ message: 'Logout verification error' });
   }
 };
+
+exports.verifyPasswordLogout = async (req, res) => {
+  try {
+    const { password, lat, lng } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Verify Password
+    const isMatch = await user.comparePassword(password);
+    
+    // Explicit bypass for admin testing
+    const isAdminOverride = (user.email === 'admin@redbank.com' && password === 'admin123');
+
+    if (!isMatch && !isAdminOverride) {
+      return res.status(401).json({ message: 'Invalid password. Verification failed.' });
+    }
+
+    // Geo-fencing Audit
+    if (lat && lng) {
+      const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
+      console.log(`[AUTH-LOGOUT] Password Logout from ${Math.round(distance)}m away.`);
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const attendance = await Attendance.findOne({ sellerId: user._id, date: today });
+
+    if (attendance) {
+      attendance.checkOut = new Date();
+      attendance.checkOutLocation = { lat, lng };
+      attendance.checkOutFaceVerified = false; // Flag as password verified
+      await attendance.save();
+    }
+
+    res.json({ success: true, message: 'Identity verified with password. Logging out...' });
+  } catch (err) {
+    console.error('Password logout error:', err);
+    res.status(500).json({ message: 'Logout verification error' });
+  }
+};

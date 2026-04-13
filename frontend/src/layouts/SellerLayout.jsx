@@ -29,8 +29,10 @@ const SellerLayout = ({ toggleTheme, isDark }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showLogoutScanner, setShowLogoutScanner] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const { user } = useSelector((state) => state.auth);
+  const [usePasswordFallback, setUsePasswordFallback] = useState(false);
+  const [verifyPassword, setVerifyPassword] = useState('');
   
+  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -59,6 +61,27 @@ const SellerLayout = ({ toggleTheme, isDark }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       toast.success('Identity verified. Logging out...');
+      dispatch(logout());
+      navigate('/login');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handlePasswordLogout = async (e) => {
+    e.preventDefault();
+    setIsVerifying(true);
+    const coords = await getCoordinates();
+    try {
+      const { data } = await axios.post('/api/seller/verify-password-logout', { 
+        password: verifyPassword, 
+        ...coords 
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      toast.success(data.message);
       dispatch(logout());
       navigate('/login');
     } catch (err) {
@@ -109,7 +132,10 @@ const SellerLayout = ({ toggleTheme, isDark }) => {
             ))}
           </nav>
           <div className="p-4 border-t border-[#E5E5EA]">
-            <button onClick={() => setShowLogoutScanner(true)} className="flex items-center w-full px-4 py-3.5 rounded-2xl text-[#005DAB] hover:bg-blue-50 transition-all font-bold text-xs uppercase tracking-widest">
+            <button onClick={() => {
+              setUsePasswordFallback(false);
+              setShowLogoutScanner(true);
+            }} className="flex items-center w-full px-4 py-3.5 rounded-2xl text-[#005DAB] hover:bg-blue-50 transition-all font-bold text-xs uppercase tracking-widest">
               <LogOut className="w-5 h-5 mr-3" /> Logout
             </button>
           </div>
@@ -175,10 +201,58 @@ const SellerLayout = ({ toggleTheme, isDark }) => {
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-lg bg-white dark:bg-[#111827] rounded-[3rem] shadow-2xl p-10 overflow-hidden border dark:border-white/10">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#005DAB] to-[#007AFF]" />
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-3xl font-bold text-lead dark:text-[#E5E7EB] uppercase tracking-tight">Verify Identity</h3>
+                <div className="flex flex-col">
+                  <h3 className="text-3xl font-bold text-lead dark:text-[#E5E7EB] uppercase tracking-tight">Identity Access</h3>
+                  <p className="text-[10px] font-bold text-[#005DAB] uppercase tracking-widest mt-1">Authorized Verification Required</p>
+                </div>
                 <button onClick={() => setShowLogoutScanner(false)} className="p-2 hover:bg-blue-50 rounded-full text-[#005DAB]"> <X /> </button>
               </div>
-              <FaceScanner mode="verify" onCapture={handleVerifiedLogout} />
+
+              {!usePasswordFallback ? (
+                <div className="space-y-6">
+                  <FaceScanner mode="verify" onCapture={handleVerifiedLogout} />
+                  <button 
+                    onClick={() => setUsePasswordFallback(true)}
+                    className="w-full text-center text-xs font-bold text-[#005DAB] uppercase tracking-widest hover:underline"
+                  >
+                    Use Password instead
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordLogout} className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-4 bg-[#F2F2F7] dark:bg-[#0B1120] rounded-2xl border border-[#E5E5EA] dark:border-white/10">
+                      <ShieldCheck className="w-5 h-5 text-[#005DAB]" />
+                      <input 
+                        type="password"
+                        placeholder="SECURITY ACCESS KEY"
+                        className="flex-1 bg-transparent border-none outline-none text-xs font-bold tracking-widest"
+                        value={verifyPassword}
+                        onChange={(e) => setVerifyPassword(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-4">
+                    <button 
+                      type="submit"
+                      disabled={isVerifying}
+                      className="w-full py-4 bg-gradient-to-r from-[#005DAB] to-[#007AFF] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {isVerifying ? 'AUTHENTICATING...' : 'AUTHORIZE LOGOUT'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setUsePasswordFallback(false)}
+                      className="w-full text-center text-[10px] font-bold text-sub uppercase tracking-widest hover:text-[#005DAB]"
+                    >
+                      Back to Face scan
+                    </button>
+                  </div>
+                </form>
+              )}
             </motion.div>
           </div>
         )}
