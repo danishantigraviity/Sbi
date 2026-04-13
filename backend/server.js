@@ -76,11 +76,10 @@ const seedAdmin = async () => {
         const existingAdmin = await User.findOne({ email: adminEmail });
         
         if (!existingAdmin) {
-            const hashedPassword = await bcrypt.hash('admin123', 10);
             const admin = new User({
                 name: 'System Administrator',
                 email: adminEmail,
-                password: hashedPassword,
+                password: 'admin123',
                 role: 'admin',
                 phone: '9999999999'
             });
@@ -101,12 +100,10 @@ const seedTL = async () => {
         const tlEmail = 'tl@redbank.com';
         const existingTL = await User.findOne({ email: tlEmail });
         if (!existingTL) {
-            const bcrypt = require('bcryptjs');
-            const hashedPassword = await bcrypt.hash('tl123', 10);
             const tl = new User({
                 name: 'Team Lead',
                 email: tlEmail,
-                password: hashedPassword,
+                password: 'tl123',
                 role: 'tl',
                 phone: '8888888888'
             });

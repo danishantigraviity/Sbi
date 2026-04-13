@@ -66,7 +66,8 @@ exports.faceLogin = async (req, res) => {
       if (process.env.NODE_ENV === 'development' && req.body.bypass === true) {
         const user = await User.findOne({ role });
         if (user) {
-          const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+          const secret = process.env.JWT_SECRET || 'fallback_secret_key_999';
+          const token = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1d' });
           return res.json({
             token,
             user: { id: user._id, name: user.name, email: user.email, role: user.role }
@@ -81,7 +82,7 @@ exports.faceLogin = async (req, res) => {
     
     if (allValidUsers.length === 0) {
        return res.status(404).json({ 
-         message: 'Biometric logic requires prior face enrollment. Please use password login or contact Admin.',
+         message: 'Biometric login requires prior face enrollment. Please use password login or contact Admin.',
          type: 'NO_ENROLLMENT'
        });
     }
@@ -114,12 +115,12 @@ exports.faceLogin = async (req, res) => {
       return res.status(401).json({ message: 'Liveness check failed. Blink and move slightly.' });
     }
 
-    // Reset failures on success 
     user.bioLoginFailures = 0;
     user.bioLockoutUntil = null;
     await user.save();
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const secret = process.env.JWT_SECRET || 'fallback_secret_key_999';
+    const token = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1d' });
     
     // Check-in attendance
     const today = new Date().toISOString().split('T')[0];

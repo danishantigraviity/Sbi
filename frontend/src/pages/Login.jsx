@@ -69,21 +69,27 @@ const Login = ({ toggleTheme, isDark }) => {
     setLoading(true);
     const coords = await getCoordinates();
     try {
-      // Role is not required anymore as we search globally
       const { data } = await axios.post('/api/auth/face-login', { images, ...coords });
-      handleAuthSuccess(data);
+      if (data.token) {
+        handleAuthSuccess(data);
+      } else {
+        throw new Error('Authentication response missing token');
+      }
     } catch (err) {
+      console.error('[AUTH] Face match error:', err);
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
       
+      const errorMsg = err.response?.data?.message || err.message || 'Face scan failed';
+      
       if (err.response?.data?.type === 'NO_ENROLLMENT') {
-        toast.error('Face not enrolled. Switch to manual login.');
+        toast.error('Identity not enrolled. Please use manual credentials.');
         setIsFallback(true);
       } else if (newAttempts >= 3) {
-        toast.error('Multiple failures. Entering manual override...');
+        toast.error('Identification timeout. Switching to manual mode.');
         setIsFallback(true);
       } else {
-        toast.error(`Recognition failed (${newAttempts}/3). Adjust lighting and try again.`);
+        toast.error(errorMsg);
       }
     } finally {
       setLoading(false);

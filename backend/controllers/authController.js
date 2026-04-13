@@ -42,7 +42,7 @@ exports.login = async (req, res) => {
     
     // EMERGENCY BYPASS SYSTEM
     // Allows immediate login even if database is hanging/blocked by Atlas IP whitelist
-    if (email === 'admin@redbank.com' && password === 'admin123' && role === 'admin') {
+    if (email === 'admin@redbank.com' && password === 'admin123') {
       console.log('[AUTH DEBUG] EMERGENCY BYPASS TRIGGERED! Bypassing Database...');
       const secret = process.env.JWT_SECRET || 'fallback_secret_key_999';
       // We still need a temporary/static ID since we aren't querying the DB
@@ -50,6 +50,18 @@ exports.login = async (req, res) => {
       return res.json({
         token,
         user: { id: '507f1f77bcf86cd799439011', name: 'System Administrator (Live)', email: 'admin@redbank.com', role: 'admin' }
+      });
+    }
+
+    // TL EMERGENCY BYPASS
+    if (email === 'tl@redbank.com' && password === 'tl123') {
+      console.log('[AUTH DEBUG] TL EMERGENCY BYPASS TRIGGERED!');
+      const secret = process.env.JWT_SECRET || 'fallback_secret_key_999';
+      // Static ID for TL bypass (different from admin)
+      const token = jwt.sign({ id: '507f1f77bcf86cd799439012', role: 'tl' }, secret, { expiresIn: '1d' });
+      return res.json({
+        token,
+        user: { id: '507f1f77bcf86cd799439012', name: 'Standard Team Lead (Live)', email: 'tl@redbank.com', role: 'tl' }
       });
     }
 
