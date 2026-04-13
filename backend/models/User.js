@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'seller'], required: true },
+  role: { type: String, enum: ['admin', 'tl', 'seller'], required: true },
+  managedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // TL who manages this seller
   phone: { type: String, required: true },
   faceEncodings: { type: [[Number]], default: [] },
   bioLoginFailures: { type: Number, default: 0 },

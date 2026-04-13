@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const crmRoutes = require('./routes/crmRoutes');
+const tlRoutes = require('./routes/tlRoutes');
 const { startAutocallWorker } = require('./services/autocallService');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -93,12 +94,39 @@ const seedAdmin = async () => {
     }
 };
 
+// Auto-Seed TL Function
+const seedTL = async () => {
+    try {
+        const User = require('./models/User');
+        const tlEmail = 'tl@redbank.com';
+        const existingTL = await User.findOne({ email: tlEmail });
+        if (!existingTL) {
+            const bcrypt = require('bcryptjs');
+            const hashedPassword = await bcrypt.hash('tl123', 10);
+            const tl = new User({
+                name: 'Team Lead',
+                email: tlEmail,
+                password: hashedPassword,
+                role: 'tl',
+                phone: '8888888888'
+            });
+            await tl.save();
+            console.log('[SEED] Default TL created (tl@redbank.com / tl123)');
+        } else {
+            console.log('[SEED] TL account verified.');
+        }
+    } catch (err) {
+        console.error('[SEED ERROR] Could not verify/seed TL:', err.message);
+    }
+};
+
 // Routes
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/crm', crmRoutes);
+app.use('/api/tl', tlRoutes);
 app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/work', require('./routes/workRoutes'));
 app.get('/api/health', (req, res) => res.json({ status: 'OK' }));
@@ -153,6 +181,7 @@ const PORT = process.env.PORT || 5001;
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   await seedAdmin(); // Ensure admin exists
+  await seedTL();    // Ensure default TL exists
   const seedDashboard = require('./seed_dashboard');
   await seedDashboard(); // Ensure dashboard has data
   startAutocallWorker(); // Background task for CRM calls

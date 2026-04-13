@@ -22,6 +22,11 @@ import SellerDutyPermissions from "./pages/seller/DutyPermissions";
 import WorkReports from "./pages/shared/WorkReports";
 import AdminLayout from "./layouts/AdminLayout";
 import SellerLayout from "./layouts/SellerLayout";
+import TLLayout from "./layouts/TLLayout";
+import TLDashboard from "./pages/tl/Dashboard";
+import TLAgents from "./pages/tl/Agents";
+import TLTasks from "./pages/tl/Tasks";
+import TLLeads from "./pages/tl/Leads";
 import ErrorBoundary from "./components/ErrorBoundary";
 import EnrollmentModal from "./components/EnrollmentModal";
 import axios from "axios";
@@ -82,6 +87,8 @@ function App() {
                   to={
                     user.role === "admin"
                       ? "/admin/dashboard"
+                      : user.role === "tl"
+                      ? "/tl/dashboard"
                       : "/seller/dashboard"
                   }
                   replace
@@ -103,6 +110,8 @@ function App() {
                   to={
                     user.role === "admin"
                       ? "/admin/dashboard"
+                      : user.role === "tl"
+                      ? "/tl/dashboard"
                       : "/seller/dashboard"
                   }
                   replace
@@ -119,6 +128,8 @@ function App() {
                 <AdminLayout toggleTheme={toggleTheme} isDark={isDark} />
               ) : isAuthenticated && user?.role === "seller" ? (
                 <Navigate to="/seller/dashboard" replace />
+              ) : isAuthenticated && user?.role === "tl" ? (
+                <Navigate to="/tl/dashboard" replace />
               ) : (
                 <Navigate to="/admin/login" replace />
               )
@@ -136,6 +147,28 @@ function App() {
             <Route path="tracking" element={<AdminLiveTracking />} />
             <Route path="work-permissions" element={<AdminWorkPermissions />} />
             <Route path="reports" element={<WorkReports />} />
+          </Route>
+
+          {/* TL Routes */}
+          <Route
+            path="/tl"
+            element={
+              isAuthenticated && user?.role === "tl" ? (
+                <TLLayout toggleTheme={toggleTheme} isDark={isDark} />
+              ) : isAuthenticated && user?.role === "admin" ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : isAuthenticated && user?.role === "seller" ? (
+                <Navigate to="/seller/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          >
+            <Route index element={<Navigate to="/tl/dashboard" />} />
+            <Route path="dashboard" element={<TLDashboard />} />
+            <Route path="agents" element={<TLAgents />} />
+            <Route path="tasks" element={<TLTasks />} />
+            <Route path="leads" element={<TLLeads />} />
           </Route>
 
           {/* Seller Routes */}
@@ -170,6 +203,8 @@ function App() {
             element={
               isAuthenticated && user?.role === "admin" ? (
                 <Navigate to="/admin/dashboard" replace />
+              ) : isAuthenticated && user?.role === "tl" ? (
+                <Navigate to="/tl/dashboard" replace />
               ) : isAuthenticated && user?.role === "seller" ? (
                 <Navigate to="/seller/dashboard" replace />
               ) : (
@@ -182,6 +217,8 @@ function App() {
             element={
               isAuthenticated && user?.role === "admin" ? (
                 <Navigate to="/admin/dashboard" replace />
+              ) : isAuthenticated && user?.role === "tl" ? (
+                <Navigate to="/tl/dashboard" replace />
               ) : isAuthenticated && user?.role === "seller" ? (
                 <Navigate to="/seller/dashboard" replace />
               ) : (

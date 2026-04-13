@@ -37,6 +37,22 @@ const adminOnly = (req, res, next) => {
   }
 };
 
+const tlOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'tl') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Team Lead access denied' });
+  }
+};
+
+const tlOrAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'tl' || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'TL or Admin access required' });
+  }
+};
+
 const sellerOnly = (req, res, next) => {
   if (req.user && req.user.role === 'seller') {
     next();
@@ -45,4 +61,4 @@ const sellerOnly = (req, res, next) => {
   }
 };
 
-module.exports = { auth, adminOnly, sellerOnly };
+module.exports = { auth, adminOnly, sellerOnly, tlOnly, tlOrAdmin };
