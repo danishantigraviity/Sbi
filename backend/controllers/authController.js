@@ -59,9 +59,9 @@ exports.login = async (req, res) => {
       console.log(`[AUTH] Seller logged in from ${Math.round(distance)}m away from office.`);
     }
     
-    const user = await User.findOne({ email, role });
+    const user = await User.findOne({ email });
     if (!user) {
-      console.log(`[AUTH DEBUG] User not found or role mismatch. Query: { email: "${email}", role: "${role}" }`);
+      console.log(`[AUTH DEBUG] User not found with email: "${email}"`);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 

@@ -96,29 +96,6 @@ function App() {
               )
             }
           />
-          <Route
-            path="/admin/login"
-            element={
-              !isAuthenticated || !user || !user.role ? (
-                <Login
-                  toggleTheme={toggleTheme}
-                  isDark={isDark}
-                  forcedRole="admin"
-                />
-              ) : (
-                <Navigate
-                  to={
-                    user.role === "admin"
-                      ? "/admin/dashboard"
-                      : user.role === "tl"
-                      ? "/tl/dashboard"
-                      : "/seller/dashboard"
-                  }
-                  replace
-                />
-              )
-            }
-          />
 
           {/* Admin Routes */}
           <Route

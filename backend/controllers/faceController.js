@@ -76,10 +76,12 @@ exports.faceLogin = async (req, res) => {
       return res.status(400).json({ message: 'Liveness sequence (1 frame minimum) required' });
     }
 
-    const allValidUsers = await User.find({ role, faceEncodings: { $exists: true, $not: { $size: 0 } } });
+    const query = role && role !== 'all' ? { role } : {};
+    const allValidUsers = await User.find({ ...query, faceEncodings: { $exists: true, $not: { $size: 0 } } });
+    
     if (allValidUsers.length === 0) {
        return res.status(404).json({ 
-         message: 'Biometric login requires prior face enrollment. Please use password login or contact Admin.',
+         message: 'Biometric logic requires prior face enrollment. Please use password login or contact Admin.',
          type: 'NO_ENROLLMENT'
        });
     }
