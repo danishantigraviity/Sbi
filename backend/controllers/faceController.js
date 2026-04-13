@@ -193,24 +193,35 @@ exports.verifyFaceLogout = async (req, res) => {
 exports.verifyPasswordLogout = async (req, res) => {
   try {
     const { password, lat, lng } = req.body;
-    const user = await User.findById(req.user.id);
+    let isMatch = false;
+    let userId = req.user.id;
+    let userEmail = 'unknown';
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // 1. Handle Emergency Bypass Accounts First
+    if (req.user.id === '507f1f77bcf86cd799439011') {
+      isMatch = (password === 'admin123');
+      userEmail = 'admin@redbank.com';
+    } else if (req.user.id === '507f1f77bcf86cd799439012') {
+      isMatch = (password === 'tl123');
+      userEmail = 'tl@redbank.com';
+    } else {
+      // 2. Standard Database User
+      const user = await User.findById(req.user.id);
+      if (!user) return res.status(404).json({ message: 'User not found in system' });
+      
+      isMatch = await user.comparePassword(password);
+      userEmail = user.email;
+      userId = user._id;
+    }
 
-    // Verify Password
-    const isMatch = await user.comparePassword(password);
-    
-    // Explicit bypass for admin testing
-    const isAdminOverride = (user.email === 'admin@redbank.com' && password === 'admin123');
-
-    if (!isMatch && !isAdminOverride) {
-      return res.status(401).json({ message: 'Invalid password. Verification failed.' });
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid security key. Verification failed.' });
     }
 
     // Geo-fencing Audit
     if (lat && lng) {
       const distance = calculateDistance(lat, lng, OFFICE_COORDS.lat, OFFICE_COORDS.lng);
-      console.log(`[AUTH-LOGOUT] Password Logout from ${Math.round(distance)}m away.`);
+      console.log(`[AUTH-LOGOUT] Password Logout (${userEmail}) from ${Math.round(distance)}m away.`);
     }
 
     const today = new Date().toISOString().split('T')[0];
