@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Attendance = require('../models/Attendance');
 const jwt = require('jsonwebtoken');
 const { getEncodingFromImage } = require('../utils/faceHandler');
 const { calculateDistance, OFFICE_COORDS } = require('../utils/geo');
@@ -93,6 +94,29 @@ exports.login = async (req, res) => {
 
     const secret = process.env.JWT_SECRET || 'fallback_secret_key_999';
     const token = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1d' });
+
+    // Ensure Daily Attendance for sellers (Manual Login Path)
+    if (user.role === 'seller') {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        let attendance = await Attendance.findOne({ sellerId: user._id, date: today });
+        if (!attendance) {
+          attendance = new Attendance({
+            sellerId: user._id,
+            checkIn: new Date(),
+            date: today,
+            checkInLocation: { lat, lng },
+            checkInFaceVerified: false // Flag that this was a manual login check-in
+          });
+          await attendance.save();
+          console.log(`[AUTH] Automatic check-in created for seller: ${user.email}`);
+        }
+      } catch (attErr) {
+        console.error('[AUTH] Failed to create automatic check-in:', attErr.message);
+        // We don't block login if attendance fails, but we log the error
+      }
+    }
+
     res.json({
       token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role }

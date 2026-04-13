@@ -181,10 +181,10 @@ exports.verifyFaceLogout = async (req, res) => {
       attendance.checkOutFaceVerified = true;
       await attendance.save();
     } else {
-      return res.status(404).json({ message: 'No active check-in found for today. Please check-in first.' });
+      console.warn(`[BIOMETRICS] Logout verify successful for ${user.email} but no active check-in found to update.`);
     }
 
-    res.json({ success: true, message: 'Face verified successfully' });
+    res.json({ success: true, message: 'Face verified successfully. Logging out...' });
   } catch (err) {
     res.status(500).json({ message: 'Logout verification error' });
   }
