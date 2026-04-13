@@ -105,9 +105,15 @@ const verifyFaceLivenessAndMatch = async (liveImagesB64Array, allUsersArray) => 
             return new faceapi.LabeledFaceDescriptors(user._id.toString(), descriptors);
         });
 
-        const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+        const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.65);
         const matches = liveDescriptors.map(desc => faceMatcher.findBestMatch(desc));
         
+        matches.forEach(m => {
+            if (m.label !== 'unknown') {
+                console.log(`[BIOMETRICS] Match found: ${m.label} (Distance: ${m.distance.toFixed(4)})`);
+            }
+        });
+
         const matchCounts = {};
         matches.forEach(m => {
             if (m.label !== 'unknown') {

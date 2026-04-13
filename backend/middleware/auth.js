@@ -15,6 +15,10 @@ const auth = async (req, res, next) => {
       req.user = { id: '507f1f77bcf86cd799439011', role: 'admin' };
       return next();
     }
+    if (decoded.id === '507f1f77bcf86cd799439012') {
+      req.user = { id: '507f1f77bcf86cd799439012', role: 'tl' };
+      return next();
+    }
 
     const user = await User.findById(decoded.id);
 

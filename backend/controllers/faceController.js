@@ -167,7 +167,9 @@ exports.verifyFaceLogout = async (req, res) => {
     const result = await verifyFaceLivenessAndMatch(images, [user]);
 
     if (!result.match) {
-      return res.status(401).json({ message: 'Biometric verification failed' });
+      return res.status(401).json({ 
+        message: result.message || 'Identity not recognized. Please adjust lighting or remove glasses and try again.' 
+      });
     }
 
     const today = new Date().toISOString().split('T')[0];
